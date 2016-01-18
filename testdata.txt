@@ -1,0 +1,45 @@
+{
+  "id": "evt_17Uhw12CnRDC4l4bxu3MxJYx",
+  "object": "event",
+  "api_version": "2015-10-16",
+  "created": 1453142461,
+  "data": {
+    "object": {
+      "id": "sub_7kCKlpFD5RSrWd",
+      "object": "subscription",
+      "application_fee_percent": null,
+      "cancel_at_period_end": false,
+      "canceled_at": null,
+      "current_period_end": 1455820861,
+      "current_period_start": 1453142461,
+      "customer": "cus_7kCKZapZ2UZXTA",
+      "discount": null,
+      "ended_at": null,
+      "metadata": {},
+      "plan": {
+        "id": "TEST_01",
+        "object": "plan",
+        "amount": 1299,
+        "created": 1453075085,
+        "currency": "gbp",
+        "interval": "month",
+        "interval_count": 1,
+        "livemode": false,
+        "metadata": {},
+        "name": "Basic Test Plan",
+        "statement_descriptor": null,
+        "trial_period_days": null
+      },
+      "quantity": 1,
+      "start": 1453142461,
+      "status": "active",
+      "tax_percent": null,
+      "trial_end": null,
+      "trial_start": null
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 1,
+  "request": "req_7kCKYZM0YHvfSF",
+  "type": "customer.subscription.created"
+}
