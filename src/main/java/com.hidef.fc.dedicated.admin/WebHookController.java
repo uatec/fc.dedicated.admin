@@ -53,13 +53,20 @@ public class WebHookController
                 subscription.getPlan();
                 customer.getEmail();
 
+                System.out.println("Retreiving subscriptions for " + customer.getEmail());
+
                 List<Subscription> subscriptions =  subscriptionRepository.findSubscriptionByEmail(customer.getEmail());
 
                 Subscription mySubscription = subscriptions.stream().findFirst().get();
+                System.out.println("Found subscription: " + mySubscription.getId());
 
                 mySubscription.setSubscriptionEnds(new DateTime(subscription.getCurrentPeriodEnd()));
 
+                System.out.println("updated subscription end time to: " + mySubscription.getSubscriptionEnds().toString());
+
                 subscriptionRepository.save(mySubscription);
+
+                System.out.println("Subscription saved");
 
                 break;
 
