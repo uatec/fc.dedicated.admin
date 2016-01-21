@@ -70,25 +70,27 @@ public class Receiver {
         server.setDesiredStatus(ServerStatus.Running);
         server.setActualStatus(ServerStatus.Building);
         serverRepository.save(server);
+        try {
+
 //
 //
 //        String awsEndpoint = "ec2.us-west-2.amazonaws.com";
 //        String imageId = "ami-83a5bce2";
 
 
-        String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
-        String imageId = "ami-7943ec0a"; // Microsoft Windows Server 2012 R2 Base
+            String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
+            String imageId = "ami-7943ec0a"; // Microsoft Windows Server 2012 R2 Base
 
 
-        String instanceSize = "m3.medium";
+            String instanceSize = "m3.medium";
 
-        String keyName = "fc-dedi-key";
-        String securityGroupName = "fc-dedi-group";
+            String keyName = "fc-dedi-key";
+            String securityGroupName = "fc-dedi-group";
 
-        // get client
-        AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
-        amazonEC2Client.setEndpoint(awsEndpoint);
-        // get security group
+            // get client
+            AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
+            amazonEC2Client.setEndpoint(awsEndpoint);
+            // get security group
 
 
 //        CreateSecurityGroupRequest csgr = new CreateSecurityGroupRequest();
@@ -120,49 +122,54 @@ public class Receiver {
 //
 //        System.out.println(privateKey);
 
-        // start instance
-        // -- set environment variables in instance?
-        // -- deploy and install FC
-        // -- Launch FC with configuration from environment variables
+            // start instance
+            // -- set environment variables in instance?
+            // -- deploy and install FC
+            // -- Launch FC with configuration from environment variables
 
 
+            RunInstancesRequest runInstancesRequest =
+                    new RunInstancesRequest();
+
+            runInstancesRequest.withImageId(imageId)
+                    .withInstanceType(instanceSize)
+                    .withMinCount(1)
+                    .withMaxCount(1)
+                    .withKeyName(keyName)
+                    .withSecurityGroups(securityGroupName)
+                    .withUserData("PHBvd2Vyc2hlbGw+DQpjdXJsIGh0dHBzOi8vc3RlYW1jZG4tYS5ha2FtYWloZC5uZXQvY2xpZW50L2luc3RhbGxlci9zdGVhbWNtZC56aXAgLU91dHB1dEZpbGUgc3RlYW1jbWQuemlwDQpBZGQtVHlwZSAtYXNzZW1ibHkgInN5c3RlbS5pby5jb21wcmVzc2lvbi5maWxlc3lzdGVtIg0KW2lvLmNvbXByZXNzaW9uLnppcGZpbGVdOjpFeHRyYWN0VG9EaXJlY3RvcnkoInN0ZWFtY21kLnppcCIsICJjOlxzdGVhbSINCg0KY3VybCBodHRwOi8vcGluYWNsZTgudWF0ZWMubmV0L2ZjZGVkaS50eHQgLU91dHB1dEZpbGUgYzpcc3RlYW1cZmNkZWRpLnR4dA0KDQpjOlxzdGVhbVxzdGVhbWNtZCArcnVuc2NyaXB0IGM6XHN0ZWFtXGZjZGVkaS50eHQNCmNkIGM6XHN0ZWFtXGZjXDY0DQpGQ182NC5leGUgLWJhdGNobW9kZQ0KPC9wb3dlcnNoZWxsPg==");
+
+            RunInstancesResult runInstancesResult =
+                    amazonEC2Client.runInstances(runInstancesRequest);
+
+            List<Instance> instances = runInstancesResult.getReservation().getInstances();
+            System.out.println(instances.get(0).getInstanceId());
+
+            System.out.println(runInstancesRequest.toString());
+
+            CreateTagsRequest createTagsRequest = new CreateTagsRequest(runInstancesResult
+                    .getReservation()
+                    .getInstances()
+                    .stream()
+                    .map(Instance::getInstanceId)
+                    .collect(Collectors.toList()),
+                    Arrays.asList(new Tag("Name", beginTaskMessage.getTask().getServerId())));
 
 
-        RunInstancesRequest runInstancesRequest =
-                new RunInstancesRequest();
-
-        runInstancesRequest.withImageId(imageId)
-                .withInstanceType(instanceSize)
-                .withMinCount(1)
-                .withMaxCount(1)
-                .withKeyName(keyName)
-                .withSecurityGroups(securityGroupName)
-                .withUserData("PHBvd2Vyc2hlbGw+DQpjdXJsIGh0dHBzOi8vc3RlYW1jZG4tYS5ha2FtYWloZC5uZXQvY2xpZW50L2luc3RhbGxlci9zdGVhbWNtZC56aXAgLU91dHB1dEZpbGUgc3RlYW1jbWQuemlwDQpBZGQtVHlwZSAtYXNzZW1ibHkgInN5c3RlbS5pby5jb21wcmVzc2lvbi5maWxlc3lzdGVtIg0KW2lvLmNvbXByZXNzaW9uLnppcGZpbGVdOjpFeHRyYWN0VG9EaXJlY3RvcnkoInN0ZWFtY21kLnppcCIsICJjOlxzdGVhbSINCg0KY3VybCBodHRwOi8vcGluYWNsZTgudWF0ZWMubmV0L2ZjZGVkaS50eHQgLU91dHB1dEZpbGUgYzpcc3RlYW1cZmNkZWRpLnR4dA0KDQpjOlxzdGVhbVxzdGVhbWNtZCArcnVuc2NyaXB0IGM6XHN0ZWFtXGZjZGVkaS50eHQNCmNkIGM6XHN0ZWFtXGZjXDY0DQpGQ182NC5leGUgLWJhdGNobW9kZQ0KPC9wb3dlcnNoZWxsPg==");
-
-        RunInstancesResult runInstancesResult =
-                amazonEC2Client.runInstances(runInstancesRequest);
-
-        List<Instance> instances = runInstancesResult.getReservation().getInstances();
-        System.out.println(instances.get(0).getInstanceId());
-
-        System.out.println(runInstancesRequest.toString());
-
-        CreateTagsRequest createTagsRequest = new CreateTagsRequest(runInstancesResult
-        .getReservation()
-        .getInstances()
-                .stream()
-                .map(Instance::getInstanceId)
-                .collect(Collectors.toList()),
-                Arrays.asList(new Tag("Name", beginTaskMessage.getTask().getServerId())));
+            amazonEC2Client.createTags(createTagsRequest);
 
 
-        amazonEC2Client.createTags(createTagsRequest);
-
-
-        server.setActualStatus(ServerStatus.Starting);
-        serverRepository.save(server);
-        t.setTaskStatus(TaskStatus.Succeeded);
-        taskRepository.save(t);
+            server.setActualStatus(ServerStatus.Starting);
+            serverRepository.save(server);
+            t.setTaskStatus(TaskStatus.Succeeded);
+            taskRepository.save(t);
+        }
+        catch ( Exception ex)
+        {
+            t.setTaskStatus(TaskStatus.Faulted);
+            t.setMessage(ex.getMessage());
+            taskRepository.save(t);
+        }
 
     }
 }
