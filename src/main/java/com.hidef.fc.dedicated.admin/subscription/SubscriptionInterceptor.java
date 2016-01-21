@@ -4,6 +4,7 @@ import com.stripe.Stripe;
 import com.stripe.exception.*;
 import com.stripe.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.annotation.HandleAfterCreate;
 import org.springframework.data.rest.core.annotation.HandleAfterSave;
 import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
@@ -32,9 +33,13 @@ public class SubscriptionInterceptor {
 //        customer.
     }
 
+    @Value("${stripeSecretKey}")
+    public String stripeSecretKey;
+
     @HandleAfterCreate
     public void newSubscription(Subscription subscription) throws CardException, APIException, AuthenticationException, InvalidRequestException, APIConnectionException {
         System.out.println("New Subscription: " + subscription.getId());
+        Stripe.apiKey = this.stripeSecretKey;
 
         Map<String, Object> customerParams = new HashMap<>();
         customerParams.put("source", subscription.getToken());
