@@ -11,6 +11,8 @@ import org.springframework.hateoas.EntityLinks;
 import org.springframework.stereotype.Component;
 
 import javax.swing.text.html.Option;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -20,6 +22,12 @@ public class TaskInterceptor {
     private final EntityLinks entityLinks;
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    TaskRepository taskRepository;
+
+    @Autowired
+    SubscriptionRepository subscriptionRepository;
 
     @Autowired
     public TaskInterceptor(EntityLinks entityLinks) {
@@ -33,7 +41,28 @@ public class TaskInterceptor {
 
     @HandleAfterCreate
     public void newTask(Task task) {
+        List<Subscription> subscriptions =  subscriptionRepository.findSubscriptionByEmail(task.getUserEmail());
 
+
+        if ( subscriptions.size() > 0 ) {
+
+            if (subscriptions.stream().anyMatch(s -> s.getSubscriptionEnds() > new Date().getTime())) {
+                System.out.println("Task created with active subscription. Invoking server creation.");
+
+                rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
+                rabbitTemplate.convertAndSend("fc-dedicated-admin",
+                        new BeginTaskMessage(task));
+            } else {
+                System.out.println("Task faulted, no active subscription");
+                task.setTaskStatus(TaskStatus.Faulted);
+                taskRepository.save(task);
+            }
+        }
+        else {
+            System.out.println("Task faulted, no subscription");
+            task.setTaskStatus(TaskStatus.Faulted);
+            taskRepository.save(task);
+        }
     }
 
     /**
