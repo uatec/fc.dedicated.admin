@@ -1,7 +1,6 @@
 package com.hidef.fc.dedicated.admin.subscription;
 
 import lombok.Data;
-import org.joda.time.DateTime;
 
 import javax.persistence.Id;
 import javax.persistence.Entity;
@@ -15,11 +14,11 @@ public class Subscription
     private String token;
     private String plan;
     private String email;
-    private DateTime subscriptionEnds;
+    private Long subscriptionEnds;
 
     public Subscription() {}
 
-    public Subscription(String id, String token, String plan, String email, DateTime subscriptionEnds) {
+    public Subscription(String id, String token, String plan, String email, Long subscriptionEnds) {
         this.id = id;
         this.token = token;
         this.plan = plan;
@@ -59,11 +58,11 @@ public class Subscription
         this.token = token;
     }
 
-    public DateTime getSubscriptionEnds() {
+    public Long getSubscriptionEnds() {
         return subscriptionEnds;
     }
 
-    public void setSubscriptionEnds(DateTime subscriptionEnds) {
+    public void setSubscriptionEnds(Long subscriptionEnds) {
         this.subscriptionEnds = subscriptionEnds;
     }
 }

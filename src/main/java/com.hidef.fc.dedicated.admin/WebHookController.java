@@ -60,9 +60,9 @@ public class WebHookController
                 Subscription mySubscription = subscriptions.stream().findFirst().get();
                 System.out.println("Found subscription: " + mySubscription.getId());
 
-                mySubscription.setSubscriptionEnds(new DateTime(subscription.getCurrentPeriodEnd()));
+                mySubscription.setSubscriptionEnds(subscription.getCurrentPeriodEnd());
 
-                System.out.println("updated subscription end time to: " + mySubscription.getSubscriptionEnds().toString());
+                System.out.println("updated subscription end time to: " + mySubscription.getSubscriptionEnds());
 
                 subscriptionRepository.save(mySubscription);
 
