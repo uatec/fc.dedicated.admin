@@ -31,14 +31,16 @@ public class Task {
     private Action action;
     private TaskStatus taskStatus = TaskStatus.Queued;
     private String userEmail;
+    private String message;
 
     public Task(){}
-    public Task(String id, String serverId, Action action, TaskStatus taskStatus, String userEmail) {
+    public Task(String id, String serverId, Action action, TaskStatus taskStatus, String userEmail, String message) {
         this.id = id;
         this.serverId = serverId;
         this.action = action;
         this.taskStatus = taskStatus;
         this.userEmail = userEmail;
+        this.message = message;
     }
 
     public String getServerId() {
@@ -79,5 +81,13 @@ public class Task {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

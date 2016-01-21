@@ -55,12 +55,14 @@ public class TaskInterceptor {
             } else {
                 System.out.println("Task faulted, no active subscription");
                 task.setTaskStatus(TaskStatus.Faulted);
+                task.setMessage("No active subscription available.");
                 taskRepository.save(task);
             }
         }
         else {
             System.out.println("Task faulted, no subscription");
             task.setTaskStatus(TaskStatus.Faulted);
+            task.setMessage("No subscription available.");
             taskRepository.save(task);
         }
     }
