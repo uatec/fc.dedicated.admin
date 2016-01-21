@@ -7,17 +7,6 @@ import javax.persistence.Id;
 import lombok.Data;
 import org.joda.time.DateTime;
 
-enum ServerStatus {
-    Shiny,
-    Building,
-    Ready,
-    Starting,
-    Running,
-    Stopping,
-    Stopped,
-    Faulted
-}
-
 @Data
 @Entity
 public class Server {
