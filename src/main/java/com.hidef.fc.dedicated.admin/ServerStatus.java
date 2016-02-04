@@ -1,4 +1,4 @@
-package com.hidef.fc.dedicated.admin.server;
+package com.hidef.fc.dedicated.admin;
 
 public enum ServerStatus {
     Shiny,
@@ -10,3 +10,4 @@ public enum ServerStatus {
     Stopped,
     Faulted
 }
+
