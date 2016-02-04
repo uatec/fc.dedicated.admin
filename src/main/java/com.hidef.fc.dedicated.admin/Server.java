@@ -1,36 +1,28 @@
-package com.hidef.fc.dedicated.admin.server;
+package com.hidef.fc.dedicated.admin;
+
+import lombok.Data;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
-import lombok.Data;
-import org.joda.time.DateTime;
-
 @Data
 @Entity
 public class Server {
 
-    private @Id @GeneratedValue String id;
+    private @Id
+    @GeneratedValue
+    String id;
     private String friendlyName;
-    private ServerStatus actualStatus = ServerStatus.Shiny;
-    private ServerStatus desiredStatus = ServerStatus.Shiny;
+    private ServerStatus status = ServerStatus.Shiny;
     private String ownerEmail;
 
     public Server() {}
 
-    public Server(String id, String friendlyName, ServerStatus actualStatus) {
+    public Server(String id, String friendlyName, ServerStatus status) {
         this.id = id;
         this.friendlyName = friendlyName;
-        this.actualStatus = actualStatus;
-    }
-
-    public ServerStatus getActualStatus() {
-        return actualStatus;
-    }
-
-    public void setActualStatus(ServerStatus actualStatus) {
-        this.actualStatus = actualStatus;
+        this.status = status;
     }
 
     public String getFriendlyName() {
@@ -49,12 +41,12 @@ public class Server {
         this.id = id;
     }
 
-    public ServerStatus getDesiredStatus() {
-        return desiredStatus;
+    public ServerStatus getStatus() {
+        return status;
     }
 
-    public void setDesiredStatus(ServerStatus desiredStatus) {
-        this.desiredStatus = desiredStatus;
+    public void setStatus(ServerStatus status) {
+        this.status = status;
     }
 
     public String getOwnerEmail() {
@@ -65,4 +57,3 @@ public class Server {
         this.ownerEmail = ownerEmail;
     }
 }
-
