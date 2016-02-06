@@ -8,7 +8,7 @@ import javax.persistence.Id;
 
 @Data
 @Entity
-public class Server {
+public class ServerConfig {
 
     private @Id
     @GeneratedValue
@@ -17,9 +17,9 @@ public class Server {
     private ServerStatus status = ServerStatus.Shiny;
     private String ownerEmail;
 
-    public Server() {}
+    public ServerConfig() {}
 
-    public Server(String id, String friendlyName, ServerStatus status) {
+    public ServerConfig(String id, String friendlyName, ServerStatus status) {
         this.id = id;
         this.friendlyName = friendlyName;
         this.status = status;

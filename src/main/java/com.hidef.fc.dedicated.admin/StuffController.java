@@ -4,10 +4,11 @@ import com.stripe.Stripe;
 import com.stripe.exception.*;
 import com.stripe.model.Card;
 import com.stripe.model.Customer;
-import com.stripe.model.CustomerCardCollection;
 import com.stripe.model.ExternalAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 class tokenrequest
 {
@@ -30,8 +32,48 @@ class tokenrequest
 @RestController
 public class StuffController
 {
+    private static UserDetails getPrincipal()
+    {
+        return (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     @Value("${stripeSecretKey}")
     public String stripeSecretKey;
+
+    @Autowired
+    UserProxyRepository userProxyRepository;
+
+
+    @Autowired
+    ServerRepository serverRepository;
+
+
+    @RequestMapping(value = "/api/createserver", method = {RequestMethod.POST})
+    public ServerConfig CreateServer(@RequestBody ServerConfig serverConfig)
+    {
+        String email = getPrincipal().getUsername();
+        serverRepository.save(serverConfig);
+        UserProxy user = userProxyRepository.findByEmail(email);
+        user.getServerConfig().add(serverConfig);
+        userProxyRepository.save(user);
+        return serverConfig;
+    }
+
+    @RequestMapping(value = "/api/getservers", method = {RequestMethod.GET})
+    {
+
+    }
+
+    @RequestMapping(value = "/api/getserverconfigs", method = {RequestMethod.GET})
+    public List<ServerConfig> GetServers() {
+        String email = getPrincipal().getUsername();
+        UserProxy user = userProxyRepository.findByEmail(email);
+        if ( user.getServerConfig().size() > 0 ) {
+            return user.getServerConfig().stream().collect(Collectors.toList());
+        } else {
+            return new ArrayList<>();
+        }
+    }
 
 
     @RequestMapping(value = "/api/paymentmethods", method = {RequestMethod.GET})
@@ -39,7 +81,7 @@ public class StuffController
 
         // TODO mask this strip response object
         Stripe.apiKey = this.stripeSecretKey;
-        String email = "uatecuk@gmail.com";
+        String email = getPrincipal().getUsername();
         UserProxy user = userProxyRepository.findByEmail(email);
         if ( user.getPaymentReferences().size() > 0 ) {
             URI firstPayment = new URI(user.getPaymentReferences().stream().findFirst().get());
@@ -50,15 +92,12 @@ public class StuffController
         }
     }
 
-    @Autowired
-    UserProxyRepository userProxyRepository;
-
     // get or create user object
     @RequestMapping(value = "/api/user", method = {RequestMethod.GET})
     public UserProxy GetOrCreateUser()
     {
         System.out.println("get or create user");
-        String email = "uatecuk@gmail.com";
+        String email = getPrincipal().getUsername();
         UserProxy user = userProxyRepository.findByEmail(email);
         if ( user == null )
         {
@@ -72,7 +111,8 @@ public class StuffController
 
     @RequestMapping(value = "/api/savepaymentmethod", method = {RequestMethod.POST})
     public void WebHook1(@RequestBody tokenrequest token) throws Exception {
-        String email = "uatecuk@gmail.com";
+
+        String email = getPrincipal().getUsername();
         UserProxy user = userProxyRepository.findByEmail(email);
         Stripe.apiKey = this.stripeSecretKey;
 

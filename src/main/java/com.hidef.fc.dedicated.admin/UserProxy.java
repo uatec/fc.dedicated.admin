@@ -1,21 +1,8 @@
 package com.hidef.fc.dedicated.admin;
 
-import com.stripe.Stripe;
-import com.stripe.exception.*;
-import com.stripe.model.Card;
-import com.stripe.model.Customer;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 
 @Data
@@ -28,12 +15,12 @@ public class UserProxy
 
     String email;
 
-    public Set<Server> getServerConfig() {
+    public Set<ServerConfig> getServerConfig() {
         return serverConfig;
     }
 
-    public void setServerConfig(Set<Server> serverConfig) {
-        this.serverConfig = serverConfig;
+    public void getServerConfig(Set<ServerConfig> serverConfigConfig) {
+        this.serverConfig = serverConfigConfig;
     }
 
     public List<String> getPaymentReferences() {
@@ -75,7 +62,7 @@ public class UserProxy
     List<String> paymentReferences = new ArrayList<>();
 
     @OneToMany
-    Set<Server> serverConfig = new HashSet<>();
+    Set<ServerConfig> serverConfig = new HashSet<>();
 
 
 
