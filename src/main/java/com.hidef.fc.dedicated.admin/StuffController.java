@@ -59,10 +59,6 @@ public class StuffController
         return serverConfig;
     }
 
-    @RequestMapping(value = "/api/getservers", method = {RequestMethod.GET})
-    {
-
-    }
 
     @RequestMapping(value = "/api/getserverconfigs", method = {RequestMethod.GET})
     public List<ServerConfig> GetServers() {
