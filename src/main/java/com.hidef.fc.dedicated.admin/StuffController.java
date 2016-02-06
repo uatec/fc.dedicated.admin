@@ -1,5 +1,9 @@
 package com.hidef.fc.dedicated.admin;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.Instance;
 import com.stripe.Stripe;
 import com.stripe.exception.*;
 import com.stripe.model.Card;
@@ -17,15 +21,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class tokenrequest
 {
     public String token;
+}
+
+
+class ServerConfigPair
+{
+    private Server server;
+    private ServerConfig config;
+
+    public Server getServer() {
+        return server;
+    }
+
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
+    public ServerConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(ServerConfig config) {
+        this.config = config;
+    }
 }
 
 @Component
@@ -39,6 +63,12 @@ public class StuffController
 
     @Value("${stripeSecretKey}")
     public String stripeSecretKey;
+
+    @Value("${awsAccessKey}")
+    public String accessKey;
+
+    @Value("${awsSecretKey}")
+    public String secretKey;
 
     @Autowired
     UserProxyRepository userProxyRepository;
@@ -59,9 +89,63 @@ public class StuffController
         return serverConfig;
     }
 
+    @RequestMapping(value = "/api/getservers", method = {RequestMethod.GET})
+    public List<ServerConfigPair> GetServerDetails() {
+        List<Server> servers = getServers();
+        return GetServerConfig().stream().map(c -> {
+            ServerConfigPair pair = new ServerConfigPair();
+            pair.setConfig(c);
+            Server server = servers
+                    .stream()
+                    .filter(s -> Objects.equals(s.getId(), c.getId()))
+                    .findFirst()
+                    .orElse(null);
+            pair.setServer(server);
+            return pair;
+        }).collect(Collectors.toList());
+    }
+
+    public List<Server> getServers()
+    {
+        String email = getPrincipal().getUsername();
+        UserProxy user = userProxyRepository.findByEmail(email);
+
+
+
+        String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
+        String imageId = "ami-7943ec0a"; // Microsoft Windows Server 2012 R2 Base
+
+
+        String instanceSize = "m3.medium";
+
+        String keyName = "fc-dedi-key";
+        String securityGroupName = "fc-dedi-group";
+        // get client
+        AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
+        amazonEC2Client.setEndpoint(awsEndpoint);
+        // get security group
+
+        DescribeInstancesResult describeInstancesResult = amazonEC2Client.describeInstances();
+
+        return describeInstancesResult.getReservations()
+                .stream()
+                .findFirst()
+                .get()
+                .getInstances()
+                .parallelStream()
+                .map((Instance i) -> {
+                    Server server = new Server();
+                    server.setDnsName(i.getPublicDnsName());
+                    server.setId(i.getInstanceId());
+                    server.setInstanceType(i.getInstanceType());
+                    server.setStatus(i.getState().getName());
+                    return server;
+                })
+                .collect(Collectors.toList());
+    }
 
     @RequestMapping(value = "/api/getserverconfigs", method = {RequestMethod.GET})
-    public List<ServerConfig> GetServers() {
+    public List<ServerConfig> GetServerConfig() {
         String email = getPrincipal().getUsername();
         UserProxy user = userProxyRepository.findByEmail(email);
         if ( user.getServerConfig().size() > 0 ) {
@@ -114,7 +198,7 @@ public class StuffController
 
         // save payment details in stripe
         Customer customer = getOrCreateCustomer(user);
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("source", token.token);
         Card paymentMethod = customer.createCard(params);
 

@@ -64,6 +64,20 @@ public class UserProxy
     @OneToMany
     Set<ServerConfig> serverConfig = new HashSet<>();
 
+    public void setServerConfig(Set<ServerConfig> serverConfig) {
+        this.serverConfig = serverConfig;
+    }
+
+    public List<String> getServerReferences() {
+        return serverReferences;
+    }
+
+    public void setServerReferences(List<String> serverReferences) {
+        this.serverReferences = serverReferences;
+    }
+
+    @ElementCollection
+    List<String> serverReferences = new ArrayList<>();
 
 
 }

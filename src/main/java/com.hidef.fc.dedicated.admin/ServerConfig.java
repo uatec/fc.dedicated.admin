@@ -15,7 +15,6 @@ public class ServerConfig {
     String id;
     private String friendlyName;
     private ServerStatus status = ServerStatus.Shiny;
-    private String ownerEmail;
 
     public ServerConfig() {}
 
@@ -47,13 +46,5 @@ public class ServerConfig {
 
     public void setStatus(ServerStatus status) {
         this.status = status;
-    }
-
-    public String getOwnerEmail() {
-        return ownerEmail;
-    }
-
-    public void setOwnerEmail(String ownerEmail) {
-        this.ownerEmail = ownerEmail;
     }
 }
