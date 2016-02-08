@@ -2,8 +2,7 @@ package com.hidef.fc.dedicated.admin;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.*;
 import com.stripe.Stripe;
 import com.stripe.exception.*;
 import com.stripe.model.Card;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class tokenrequest
@@ -86,7 +86,75 @@ public class StuffController
         UserProxy user = userProxyRepository.findByEmail(email);
         user.getServerConfig().add(serverConfig);
         userProxyRepository.save(user);
+
+        String newServerUrl = spawnServer(serverConfig, serverConfig.getId(), user.getEmail());
+        user.getServerReferences().add(newServerUrl);
+        userProxyRepository.save(user);
         return serverConfig;
+    }
+
+
+    private void openPort(AmazonEC2Client client, String securityGroup, String protocol, int port)
+    {
+        IpPermission ipPermission =
+                new IpPermission();
+
+        ipPermission.withIpRanges("0.0.0.0/0")
+                .withIpProtocol(protocol)
+                .withFromPort(port)
+                .withToPort(port);
+
+
+        AuthorizeSecurityGroupIngressRequest authorizeSecurityGroupIngressRequest =
+                new AuthorizeSecurityGroupIngressRequest();
+
+        authorizeSecurityGroupIngressRequest.withGroupName(securityGroup)
+                .withIpPermissions(ipPermission);
+
+        client.authorizeSecurityGroupIngress(authorizeSecurityGroupIngressRequest);
+
+    }
+
+
+    private String spawnServer(ServerConfig serverConfig, String serverId, String clientId) {
+
+
+        String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
+        String imageId = "ami-7943ec0a"; // Microsoft Windows Server 2012 R2 Base
+
+
+        String instanceSize = "m3.medium";
+
+        String keyName = "fc-dedi-key";
+        String securityGroupName = "fc-dedi-group";
+        // get client
+        AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
+        amazonEC2Client.setEndpoint(awsEndpoint);
+        RunInstancesRequest request = new RunInstancesRequest();
+        request.withImageId(imageId)
+                .withInstanceType(instanceSize)
+                .withMinCount(1)
+                .withMaxCount(1)
+                .withKeyName(keyName)
+                .withSecurityGroups(securityGroupName)
+                .withUserData("PHBvd2Vyc2hlbGw+DQpjdXJsIGh0dHBzOi8vc3RlYW1jZG4tYS5ha2FtYWloZC5uZXQvY2xpZW50L2luc3RhbGxlci9zdGVhbWNtZC56aXAgLU91dHB1dEZpbGUgc3RlYW1jbWQuemlwDQpBZGQtVHlwZSAtYXNzZW1ibHkgInN5c3RlbS5pby5jb21wcmVzc2lvbi5maWxlc3lzdGVtIg0KW2lvLmNvbXByZXNzaW9uLnppcGZpbGVdOjpFeHRyYWN0VG9EaXJlY3RvcnkoInN0ZWFtY21kLnppcCIsICJjOlxzdGVhbSINCg0KY3VybCBodHRwOi8vcGluYWNsZTgudWF0ZWMubmV0L2ZjZGVkaS50eHQgLU91dHB1dEZpbGUgYzpcc3RlYW1cZmNkZWRpLnR4dA0KDQpjOlxzdGVhbVxzdGVhbWNtZCArcnVuc2NyaXB0IGM6XHN0ZWFtXGZjZGVkaS50eHQNCmNkIGM6XHN0ZWFtXGZjXDY0DQpGQ182NC5leGUgLWJhdGNobW9kZQ0KPC9wb3dlcnNoZWxsPg==");
+        RunInstancesResult runInstancesResult =
+                amazonEC2Client.runInstances(request);
+
+        CreateTagsRequest createTagsRequest = new CreateTagsRequest(runInstancesResult
+                .getReservation()
+                .getInstances()
+                .stream()
+                .map(Instance::getInstanceId)
+                .collect(Collectors.toList()),
+                Arrays.asList(new Tag("Name", serverConfig.getFriendlyName()),
+                        new Tag("client_id", clientId),
+                        new Tag("server_id", serverId)));
+        amazonEC2Client.createTags(createTagsRequest);
+
+        List<Instance> instances = runInstancesResult.getReservation().getInstances();
+
+        return "vm://aws/" + awsEndpoint + "/" + instances.get(0).getInstanceId();
     }
 
     @RequestMapping(value = "/api/getservers", method = {RequestMethod.GET})
@@ -113,35 +181,44 @@ public class StuffController
 
 
         String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
-        String imageId = "ami-7943ec0a"; // Microsoft Windows Server 2012 R2 Base
-
-
-        String instanceSize = "m3.medium";
-
-        String keyName = "fc-dedi-key";
-        String securityGroupName = "fc-dedi-group";
         // get client
         AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
         amazonEC2Client.setEndpoint(awsEndpoint);
         // get security group
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.withFilters(new Filter("tag:client_id", Collections.singletonList(user.getEmail())));
+        DescribeInstancesResult describeInstancesResult = amazonEC2Client.describeInstances(request);
 
-        DescribeInstancesResult describeInstancesResult = amazonEC2Client.describeInstances();
 
-        return describeInstancesResult.getReservations()
+        List<Reservation> reservations = describeInstancesResult.getReservations();
+
+
+        if ( reservations.size() == 0 )
+        {
+            return new ArrayList<>();
+        }
+
+        return  reservations
                 .stream()
-                .findFirst()
-                .get()
-                .getInstances()
-                .parallelStream()
+                .map(Reservation::getInstances)
+                .flatMap(List::stream)
                 .map((Instance i) -> {
                     Server server = new Server();
                     server.setDnsName(i.getPublicDnsName());
-                    server.setId(i.getInstanceId());
+                    Map<String, String> tagMap = toMap(i.getTags(), Tag::getKey, Tag::getValue);
+                    server.setId(tagMap.get("server_id"));
                     server.setInstanceType(i.getInstanceType());
                     server.setStatus(i.getState().getName());
                     return server;
                 })
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
+    }
+
+    private <O, K, V> Map<K, V> toMap(List<O> original, Function<? super O, ? extends K> keyFunc, Function<? super O, ? extends V> valFunc)
+    {
+        Map<K,V> map = new HashMap<>();
+        for (O i : original) map.put(keyFunc.apply(i), valFunc.apply(i));
+        return map;
     }
 
     @RequestMapping(value = "/api/getserverconfigs", method = {RequestMethod.GET})
