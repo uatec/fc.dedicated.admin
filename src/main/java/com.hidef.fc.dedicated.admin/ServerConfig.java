@@ -11,7 +11,6 @@ import javax.persistence.Id;
 public class ServerConfig {
 
     private @Id
-    @GeneratedValue
     String id;
     private String friendlyName;
     private ServerStatus status = ServerStatus.Shiny;

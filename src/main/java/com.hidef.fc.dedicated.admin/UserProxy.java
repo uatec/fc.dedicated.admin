@@ -10,7 +10,6 @@ import java.util.*;
 public class UserProxy
 {
     public @Id
-    @GeneratedValue
     String id;
 
     String email;
