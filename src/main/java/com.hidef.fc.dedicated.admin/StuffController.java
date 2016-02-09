@@ -10,13 +10,12 @@ import com.stripe.model.Customer;
 import com.stripe.model.ExternalAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.repository.query.Param;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,6 +31,11 @@ class tokenrequest
 
 class ServerConfigPair
 {
+    public ServerConfigPair(Server server, ServerConfig config) {
+        this.server = server;
+        this.config = config;
+    }
+
     private Server server;
     private ServerConfig config;
 
@@ -51,6 +55,7 @@ class ServerConfigPair
         this.config = config;
     }
 }
+
 
 @Component
 @RestController
@@ -78,6 +83,45 @@ public class StuffController
     ServerRepository serverRepository;
 
 
+    @RequestMapping(value = "/api/deleteserver/{0}", method = {RequestMethod.DELETE})
+    public ServerConfigPair DeleteServer(String serverId) throws Exception {
+        String email = getPrincipal().getUsername();
+        UserProxy user = userProxyRepository.findByEmail(email);
+
+        Optional<ServerConfig> optServerConfig = user.getServerConfig().stream().filter(s -> s.getId().equals(serverId)).findFirst();
+
+        if ( !optServerConfig.isPresent() ) {
+            throw new ResourceNotFoundException();
+        }
+
+        ServerConfig serverConfig = optServerConfig.get();
+
+        String awsEndpoint = "ec2.eu-west-1.amazonaws.com";
+        // get client
+        AmazonEC2Client amazonEC2Client = new AmazonEC2Client(new BasicAWSCredentials(this.accessKey, this.secretKey));
+        amazonEC2Client.setEndpoint(awsEndpoint);
+
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        request.withFilters(new Filter("tag:server_id", Collections.singletonList(serverId)));
+        DescribeInstancesResult describeInstancesResult = amazonEC2Client.describeInstances(request);
+
+        TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
+        terminateInstancesRequest.withInstanceIds(describeInstancesResult.getReservations().get(0).getInstances().get(0).getInstanceId());
+        TerminateInstancesResult terminateResult = amazonEC2Client.terminateInstances(terminateInstancesRequest);
+
+        InstanceStateChange isc = terminateResult.getTerminatingInstances().stream().findFirst().get();
+
+        ServerConfig config = serverRepository.findByImplementationId("aws://" + awsEndpoint + "/" + isc.getInstanceId());
+        config.setStatus(ServerStatus.Stopping);
+        serverRepository.save(config);
+
+        request.withFilters(new Filter("tag:server_id", Collections.singletonList(serverId)));
+        DescribeInstancesResult describeInstancesResult2 = amazonEC2Client.describeInstances(request);
+
+        return new ServerConfigPair(instanceToServer(describeInstancesResult2.getReservations().get(0).getInstances().get(0)),
+                serverConfig);
+    }
+
     @RequestMapping(value = "/api/createserver", method = {RequestMethod.POST})
     public ServerConfig CreateServer(@RequestBody ServerConfig serverConfig)
     {
@@ -90,6 +134,9 @@ public class StuffController
         String newServerUrl = spawnServer(serverConfig, serverConfig.getId(), user.getEmail());
         user.getServerReferences().add(newServerUrl);
         userProxyRepository.save(user);
+
+        serverConfig.setImplementationId(newServerUrl);
+        serverRepository.save(serverConfig);
         return serverConfig;
     }
 
@@ -161,15 +208,12 @@ public class StuffController
     public List<ServerConfigPair> GetServerDetails() {
         List<Server> servers = getServers();
         return GetServerConfig().stream().map(c -> {
-            ServerConfigPair pair = new ServerConfigPair();
-            pair.setConfig(c);
             Server server = servers
                     .stream()
                     .filter(s -> Objects.equals(s.getId(), c.getId()))
                     .findFirst()
                     .orElse(null);
-            pair.setServer(server);
-            return pair;
+            return new ServerConfigPair(server, c);
         }).collect(Collectors.toList());
     }
 
@@ -202,16 +246,18 @@ public class StuffController
                 .stream()
                 .map(Reservation::getInstances)
                 .flatMap(List::stream)
-                .map((Instance i) -> {
-                    Server server = new Server();
-                    server.setDnsName(i.getPublicDnsName());
-                    Map<String, String> tagMap = toMap(i.getTags(), Tag::getKey, Tag::getValue);
-                    server.setId(tagMap.get("server_id"));
-                    server.setInstanceType(i.getInstanceType());
-                    server.setStatus(i.getState().getName());
-                    return server;
-                })
+                .map(i -> instanceToServer(i))
             .collect(Collectors.toList());
+    }
+
+    private Server instanceToServer(Instance i) {
+        Server server = new Server();
+        server.setDnsName(i.getPublicDnsName());
+        Map<String, String> tagMap = toMap(i.getTags(), Tag::getKey, Tag::getValue);
+        server.setId(tagMap.get("server_id"));
+        server.setInstanceType(i.getInstanceType());
+        server.setStatus(i.getState().getName());
+        return server;
     }
 
     private <O, K, V> Map<K, V> toMap(List<O> original, Function<? super O, ? extends K> keyFunc, Function<? super O, ? extends V> valFunc)

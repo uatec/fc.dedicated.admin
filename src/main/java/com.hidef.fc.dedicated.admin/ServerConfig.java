@@ -14,6 +14,7 @@ public class ServerConfig {
     String id;
     private String friendlyName;
     private ServerStatus status = ServerStatus.Shiny;
+    private String implementationId;
 
     public ServerConfig() {}
 
@@ -45,5 +46,13 @@ public class ServerConfig {
 
     public void setStatus(ServerStatus status) {
         this.status = status;
+    }
+
+    public String getImplementationId() {
+        return implementationId;
+    }
+
+    public void setImplementationId(String implementationId) {
+        this.implementationId = implementationId;
     }
 }
