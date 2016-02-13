@@ -10,8 +10,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.2.5.RELEASE</version>
+        <version>1.2.0.RELEASE</version>
     </parent>
+
+
+
     <packaging>jar</packaging>
 
     <dependencies>
@@ -33,16 +36,21 @@
             <version>1.16.4</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>1.4.7</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>com.h2database</groupId>-->
             <!--<artifactId>h2</artifactId>-->
             <!--<scope>runtime</scope>-->
         <!--</dependency>-->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.4-1200-jdbc41</version>
-        </dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>9.4-1200-jdbc41</version>
+    </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -93,13 +101,67 @@
         </dependency>
         <dependency>
             <groupId>com.auth0</groupId>
-            <artifactId>spring-security-auth0</artifactId>
-            <version>0.2</version>
+            <artifactId>java-jwt</artifactId>
+            <version>0.3</version>
         </dependency>
+
+
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <!-- SPRING SECURITY -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>${spring-security.version}</version>
+        </dependency>
+
+        <!-- SPRING OTHER -->
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-oxm</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>4.2.1.RELEASE</version>
+        </dependency>
+
+
     </dependencies>
 
     <properties>
         <java.version>1.8</java.version>
+
+        <spring.version>4.2.1.RELEASE</spring.version>
+        <spring-security.version>4.0.3.RELEASE</spring-security.version>
     </properties>
 
 

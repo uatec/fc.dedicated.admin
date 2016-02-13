@@ -1,6 +1,9 @@
 package com.hidef.fc.dedicated.admin;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mashape.unirest.http.ObjectMapper;
+import com.mashape.unirest.http.Unirest;
+import hidef.Auth0AuthenticationFilter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.embedded.FilterRegistrationBean;
@@ -8,13 +11,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.security.web.context.AbstractSecurityWebApplicationInitializer;
+import org.springframework.security.authentication.AuthenticationManager;
 
-import javax.servlet.Filter;
+import java.io.IOException;
 
 @Configuration
-@ComponentScan("com.hidef.fc.dedicated.admin,com.auth0")
-@ImportResource("classpath:auth0-security-context.xml")
+@ComponentScan("com.hidef.fc.dedicated.admin,com.hidef")
+@ImportResource("classpath:application-context.xml")
 @SpringBootApplication
 public class Application {
 
@@ -31,7 +34,43 @@ public class Application {
         return registration;
     }
 
+    @Bean
+    public Auth0AuthenticationFilter auth0AuthenticationFilter()
+    {
+        return new Auth0AuthenticationFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean securityFilterChain2(Auth0AuthenticationFilter auth0AuthenticationFilter) {
+        FilterRegistrationBean registration = new FilterRegistrationBean(auth0AuthenticationFilter);
+        registration.setOrder(Integer.MIN_VALUE + 1);
+        return registration;
+    }
+
+
     public static void main(String[] args) throws InterruptedException {
+
+        Unirest.setObjectMapper(new ObjectMapper() {
+            private com.fasterxml.jackson.databind.ObjectMapper jacksonObjectMapper
+                    = new com.fasterxml.jackson.databind.ObjectMapper();
+
+            public <T> T readValue(String value, Class<T> valueType) {
+                try {
+                    return jacksonObjectMapper.readValue(value, valueType);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            public String writeValue(Object value) {
+                try {
+                    return jacksonObjectMapper.writeValueAsString(value);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
         SpringApplication.run(Application.class, args);
     }
 }

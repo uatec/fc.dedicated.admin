@@ -85,6 +85,7 @@ public class StuffController
 
     @RequestMapping(value = "/api/deleteserver/{0}", method = {RequestMethod.DELETE})
     public ServerConfigPair DeleteServer(String serverId) throws Exception {
+
         String email = getPrincipal().getUsername();
         UserProxy user = userProxyRepository.findByEmail(email);
 
@@ -246,7 +247,7 @@ public class StuffController
                 .stream()
                 .map(Reservation::getInstances)
                 .flatMap(List::stream)
-                .map(i -> instanceToServer(i))
+                .map(this::instanceToServer)
             .collect(Collectors.toList());
     }
 
@@ -305,6 +306,7 @@ public class StuffController
         if ( user == null )
         {
             user = new UserProxy();
+            user.setId(java.util.UUID.randomUUID().toString());
             user.setEmail(email);
             userProxyRepository.save(user);
         }
