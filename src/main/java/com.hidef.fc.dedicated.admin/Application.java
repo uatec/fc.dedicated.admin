@@ -1,6 +1,8 @@
 package com.hidef.fc.dedicated.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.hidef.fc.dedicated.admin.controllers.AWSVMService;
+import com.hidef.fc.dedicated.admin.controllers.IVMService;
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
 import hidef.Auth0AuthenticationFilter;
@@ -20,6 +22,12 @@ import java.io.IOException;
 @ImportResource("classpath:application-context.xml")
 @SpringBootApplication
 public class Application {
+
+    @Bean
+    public IVMService vmService()
+    {
+        return new AWSVMService();
+    }
 
     @Bean
     public SimpleCORSFilter simpleCORSFilter()

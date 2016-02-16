@@ -1,4 +1,4 @@
-package com.hidef.fc.dedicated.admin;
+package com.hidef.fc.dedicated.admin.models;
 
 public enum ServerStatus {
     Shiny,
