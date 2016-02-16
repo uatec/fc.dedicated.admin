@@ -1,8 +1,8 @@
 package com.hidef.fc.dedicated.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.hidef.fc.dedicated.admin.controllers.AWSVMService;
-import com.hidef.fc.dedicated.admin.controllers.IVMService;
+import com.hidef.fc.dedicated.admin.services.AWSVMService;
+import com.hidef.fc.dedicated.admin.services.IVMService;
 import com.mashape.unirest.http.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
 import hidef.Auth0AuthenticationFilter;
@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.security.authentication.AuthenticationManager;
 
 import java.io.IOException;
 
