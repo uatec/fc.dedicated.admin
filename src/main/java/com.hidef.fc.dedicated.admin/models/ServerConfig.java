@@ -2,11 +2,12 @@ package com.hidef.fc.dedicated.admin.models;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+//import javax.persistence.Entity;
+//import javax.persistence.Id;
 
+import org.springframework.data.annotation.Id;
 @Data
-@Entity
+//@Entity
 public class ServerConfig {
 
     private @Id

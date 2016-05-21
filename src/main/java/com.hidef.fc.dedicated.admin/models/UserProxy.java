@@ -1,12 +1,13 @@
 package com.hidef.fc.dedicated.admin.models;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 
-import javax.persistence.*;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 @Data
-@Entity
 public class UserProxy
 {
     public @Id
@@ -54,13 +55,10 @@ public class UserProxy
         this.id = id;
     }
 
-    @ElementCollection
     List<String> identityReferences = new ArrayList<>();
 
-    @ElementCollection
     List<String> paymentReferences = new ArrayList<>();
 
-    @OneToMany
     Set<ServerConfig> serverConfig = new HashSet<>();
 
     public void setServerConfig(Set<ServerConfig> serverConfig) {
@@ -75,7 +73,6 @@ public class UserProxy
         this.serverReferences = serverReferences;
     }
 
-    @ElementCollection
     List<String> serverReferences = new ArrayList<>();
 
 
